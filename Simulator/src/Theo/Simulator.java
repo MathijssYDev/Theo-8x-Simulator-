@@ -1,4 +1,4 @@
-package Theo.Simulator;
+package Theo;
 
 import java.util.Arrays;
 import java.io.BufferedReader;

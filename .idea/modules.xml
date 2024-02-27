@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Theo x8.iml" filepath="$PROJECT_DIR$/Theo x8.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Simulator/Simulator.iml" filepath="$PROJECT_DIR$/Simulator/Simulator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Theo-8x-Simulator-.iml" filepath="$PROJECT_DIR$/.idea/Theo-8x-Simulator-.iml" />
     </modules>
   </component>
 </project>
