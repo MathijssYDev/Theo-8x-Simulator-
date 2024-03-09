@@ -10,7 +10,7 @@ import java.util.TimerTask;
 public class Simulator {
     String BOOTfile;
     String ROMfile;
-    int clockspeed = 1000; // Speed in hz
+    int clockspeed = 10000; // Speed in hz
     byte[][] RAM = new byte[256][256];
     byte[][] ROM;
     byte[][] BOOT;
@@ -76,18 +76,31 @@ public class Simulator {
         if (low_bits ==0x0) {
             StartBit = val;
         } else if (low_bits ==0x1) {
-            Acc += (byte) (val ? 1 : 0);
-            Acc -= (byte) (val ? 0 : 1);
+            FlgC = false;
+            FlgO = false;
+            FlgZ = false;
+
+            y =(byte) (val ? -1 : 1);
+
+            if ((Acc&0xFF) + (y) < 0) {
+                Acc += y;
+                FlgO = true;
+            } else if ((int) (Acc&0xFF) + (y) > 255) {
+                Acc += y;
+                FlgC = true;
+            } else {
+                Acc += y;
+            }
         } else if (low_bits ==0x2) {
             if (ROMMODE && StartBit) {
                 x = val ? ROM[msB][lsB]&0xFF: ROM[ROM[msB][lsB]&0xFF][ROM[msB2][lsB2]&0xFF]&0xFF;
-            } else if(StartBit) {
+            } else if(StartBit || ROMMODE) {
                 x = val ? RAM[msB][lsB]&0xFF: RAM[RAM[msB][lsB]&0xFF][RAM[msB2][lsB2]&0xFF]&0xFF;
             }
             if(!StartBit) {
                 x = val ? (BOOT[msB][lsB]&0xFF)&0xFF:BOOT[BOOT[msB][lsB]&0xFF][BOOT[msB2][lsB2]&0xFF]&0xFF;
             }
-            y =(byte) ((x + (b3 ? CARRY : 0)) * (b2 ? -1:1));
+            y = (byte) ((x + (b3 ? CARRY : 0)) * (b2 ? -1:1));
 
             // Reset Flags
             FlgC = false;
@@ -95,10 +108,11 @@ public class Simulator {
             FlgZ = false;
 
             if ((Acc&0xFF) + (y) < 0) {
-                Acc = (byte) (((Acc&0xFF)*-1)-1);
+//                Acc = (byte) (((Acc&0xFF)*-1)-1);
+                Acc += y;
                 FlgO = true;
             } else if ((int) (Acc&0xFF) + (y) > 255) {
-                Acc = (byte)(Math.abs(Acc&0xFF-y)- 1);
+                Acc += y;
                 FlgC = true;
             } else {
                 Acc += y;
@@ -115,7 +129,7 @@ public class Simulator {
         } else if (low_bits ==0x4) {
             if (ROMMODE && StartBit) {
                 x = val ? ROM[msB][lsB]&0xFF: ROM[ROM[msB][lsB]&0xFF][ROM[msB2][lsB2]&0xFF]&0xFF;
-            } else if(StartBit) {
+            } else if(StartBit|| ROMMODE) {
                 x = val ? RAM[msB][lsB]&0xFF: RAM[RAM[msB][lsB]&0xFF][RAM[msB2][lsB2]&0xFF]&0xFF;
             }
             if(!StartBit) {
@@ -132,7 +146,7 @@ public class Simulator {
         } else if (low_bits == 0x5) {
             if (ROMMODE && StartBit) {
                 x = val ? ROM[msB][lsB]&0xFF: ROM[ROM[msB][lsB]&0xFF][ROM[msB2][lsB2]&0xFF]&0xFF;
-            } else if(StartBit) {
+            } else if(StartBit|| ROMMODE) {
                 x = val ? RAM[msB][lsB]&0xFF: RAM[RAM[msB][lsB]&0xFF][RAM[msB2][lsB2]&0xFF]&0xFF;
             }
             if(!StartBit) {
@@ -155,23 +169,33 @@ public class Simulator {
             }
             ProgramCounter += val ? 1: 2;
         } else if (low_bits == 0x6) {
-            if(b3) {
-                Acc = (byte) (val ? (BOOT[msB][lsB]&0xFF)&0xFF:BOOT[BOOT[msB][lsB]&0xFF][BOOT[msB2][lsB2]&0xFF]&0xFF);
-            } else if (b2) {
-                Acc = (byte) (val ? RAM[msB][lsB]&0xFF: RAM[RAM[msB][lsB]&0xFF][RAM[msB2][lsB2]&0xFF]&0xFF);
-            } else {
-                if (val) {
-                    RAM[msB][lsB] = (byte)(Acc&0xFF);
+            if (b2) {
+                if (!ROMMODE && b3) {
+                    Acc = (byte) (val ? (BOOT[msB][lsB] & 0xFF) & 0xFF : BOOT[BOOT[msB][lsB] & 0xFF][BOOT[msB2][lsB2] & 0xFF] & 0xFF);
+                } else if (ROMMODE) {
+                    Acc = (byte) (val ? (ROM[msB][lsB] & 0xFF) & 0xFF : ROM[ROM[msB][lsB] & 0xFF][ROM[msB2][lsB2] & 0xFF] & 0xFF);
                 } else {
-                    RAM[RAM[msB][lsB]&0xFF][RAM[msB2][lsB2]&0xFF] = (byte)(Acc&0xFF);
+                    Acc = (byte) (val ? RAM[msB][lsB] & 0xFF : RAM[RAM[msB][lsB] & 0xFF][RAM[msB2][lsB2] & 0xFF] & 0xFF);
+                }
+
+            } else {
+               if (ROMMODE) {
+                   if (val) {
+                       ROM[msB][lsB] = (byte) (Acc & 0xFF);
+                   } else {
+                       ROM[ROM[msB][lsB] & 0xFF][ROM[msB2][lsB2] & 0xFF] = (byte) (Acc & 0xFF);
+                   }
+                } else {
+                   if (val) {
+                       RAM[msB][lsB] = (byte) (Acc & 0xFF);
+                   } else {
+                       RAM[RAM[msB][lsB] & 0xFF][RAM[msB2][lsB2] & 0xFF] = (byte) (Acc & 0xFF);
+                   }
                 }
             }
 
             ProgramCounter += val ? 1: 2;
         } else if (low_bits == 0x7) {
-
-            return;
-        } else if (low_bits == 0x8) {
             byte locationMSB = 0;
             byte locationLSB = 0;
 
@@ -188,13 +212,17 @@ public class Simulator {
             }
 
             short Location = (short)(((locationMSB << 8) | (locationLSB & 0xFF))& 0xFFFF);
-
-            if ((FlgC && b2) || (FlgO && b3) || (FlgZ && !b2 && !b3)){
+            if ((FlgC && b3 && !b2) || (FlgO && b3 && b2) || (!b2 && !b3)|| (FlgZ && !b3)){
                 ProgramCounter = Location;
+            } else {
+                ProgramCounter+=3;
             }
             return;
         } else if (low_bits == 0xF) {
             System.out.println(Acc&0xFF );
+        } else if (low_bits == 0x9) {
+            ProgramCounter = 0;
+            System.out.println("BREAK");
         }
         ProgramCounter++;
 
