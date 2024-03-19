@@ -7,4 +7,5 @@ When starting this program you need to add 2 arguments 'Boot file location' and 
 > The Rom file includes the program run by the CPU.
     
 ## Instruction Set
-![image](https://github.com/MathijssYDev/Theo-8x-Simulator-/assets/81950362/7fc71bc7-82d4-4345-8864-e6d2b18831e3)
+![image](https://github.com/MathijssYDev/Theo-8x-Simulator-/assets/81950362/821bbf7a-3ffb-42be-9d15-0a2fd56db0dc)
+
